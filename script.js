@@ -285,29 +285,87 @@ function applyUser(user) {
         ? 'قائمة أسعار التوصيل لمناطق السلط'
         : 'قائمة أسعار مستقلة لكل من السرو وأم النعاج';
     document.getElementById('userWrap').style.display = user ? '' : 'none';
-    if (user) fillUserUI(user);
+    if (user) { fillUserUI(user); renderHome(); }
     closeUserMenu();
     document.body.classList.toggle('authed', !!user);          // التطبيق مخفي قبل تسجيل الدخول
     document.getElementById('appShell').inert = !user;         // ولا يمكن الوصول إليه بالكيبورد أيضاً
 }
 
-/* ---------- بيانات تجريبية للواجهة (تُستبدل لاحقاً ببيانات حقيقية من الخادم) ---------- */
-const DEMO_ORDERS = [
-    { id: 'ORD-1042', to: 'السلط - المنشية', t: 'قبل 12 د', st: 'go', label: 'في الطريق' },
-    { id: 'ORD-1041', to: 'عمان - الجبيهة', t: 'قبل 40 د', st: 'ok', label: 'تم التسليم' },
-    { id: 'ORD-1040', to: 'السلط - الصبيحي', t: 'قبل ساعة', st: 'ok', label: 'تم التسليم' },
-    { id: 'ORD-1039', to: 'عمان - طبربور', t: 'قبل ساعتين', st: 'no', label: 'ملغي' },
-    { id: 'ORD-1038', to: 'السلط - وسط البلد', t: 'قبل 3 ساعات', st: 'ok', label: 'تم التسليم' },
-];
-function orderRow(o) {
-    return `<div class="hm-order"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>` +
-        `<span class="tx"><b>${o.to}</b><small>#${o.id} · ${o.t}</small></span><span class="pill ${o.st}">${o.label}</span></div>`;
+/* ---------- سجل الطلبات (يُحفظ على هذا الجهاز لكل حساب) ---------- */
+const MIN = 60000;
+const esc = (t) => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ordersKey = () => 'hw-orders-' + (currentUser ? currentUser.id : '');
+
+function loadOrders() {
+    try { const a = JSON.parse(localStorage.getItem(ordersKey()) || '[]'); return Array.isArray(a) ? a : []; }
+    catch (e) { return []; }
 }
+function saveOrders(list) {
+    try { localStorage.setItem(ordersKey(), JSON.stringify(list.slice(0, 200))); } catch (e) {}
+}
+function isToday(ts) { return new Date(ts).toDateString() === new Date().toDateString(); }
+
+function addOrder(to, value, notes) {
+    const list = loadOrders();
+    const d = new Date(), p = (n) => String(n).padStart(2, '0');
+    const n = list.filter(o => isToday(o.ts)).length + 1;
+    list.unshift({ id: `${String(d.getFullYear()).slice(2)}${p(d.getMonth() + 1)}${p(d.getDate())}-${n}`, ts: Date.now(), to, value, notes, status: 'active' });
+    saveOrders(list);
+    renderHome();
+}
+function setOrderStatus(id, status) {
+    const list = loadOrders(), o = list.find(x => x.id === id);
+    if (!o) return;
+    o.status = status; o.endTs = Date.now();
+    saveOrders(list);
+    renderHome();
+}
+
+function ago(ts) {
+    const m = Math.max(0, Math.round((Date.now() - ts) / MIN));
+    if (m < 1) return 'الآن';
+    if (m < 60) return `قبل ${m} د`;
+    if (isToday(ts)) return new Date(ts).toLocaleTimeString('ar-JO', { hour: 'numeric', minute: '2-digit' });
+    return new Date(ts).toLocaleDateString('ar-JO', { day: 'numeric', month: 'short' });
+}
+const STATUS = { active: ['go', 'قيد التوصيل'], done: ['ok', 'تم التسليم'], cancel: ['no', 'ملغي'] };
+const PIN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+function orderRow(o, withActions) {
+    const [cls, label] = STATUS[o.status] || STATUS.active;
+    const val = o.value ? ` · القيمة: ${esc(o.value)}` : '';
+    const acts = withActions && o.status === 'active'
+        ? `<div class="acts"><button type="button" class="b-ok" onclick="setOrderStatus('${o.id}','done')">تم التسليم</button><button type="button" class="b-no" onclick="setOrderStatus('${o.id}','cancel')">إلغاء الطلب</button></div>` : '';
+    return `<div class="hm-order"><span class="ic">${PIN_ICON}</span>` +
+        `<span class="tx"><b>${esc(o.to)}</b><small>#${esc(o.id)} · ${ago(o.ts)}${val}</small></span><span class="pill ${cls}">${label}</span>${acts}</div>`;
+}
+
+function activeCard(o) {
+    return `<article class="hm-track"><div class="hm-track-top"><div><b>طلب #${esc(o.id)}</b><small>${esc(o.to)}</small></div>` +
+        `<span class="hm-eta"><i></i>${ago(o.ts)}</span></div>` +
+        `<ol class="hm-steps"><li class="done"><span>${CHECK_ICON}</span>تم الإرسال</li><li class="now"><span></span>قيد التوصيل</li><li><span></span>تم التسليم</li></ol>` +
+        `<div class="acts"><button type="button" class="b-ok" onclick="setOrderStatus('${o.id}','done')">تم التسليم</button><button type="button" class="b-no" onclick="setOrderStatus('${o.id}','cancel')">إلغاء الطلب</button></div></article>`;
+}
+
 function renderHome() {
+    if (!currentUser) return;
     const h = new Date().getHours();
     document.getElementById('hmHello').textContent = h < 12 ? 'صباح الخير' : (h < 18 ? 'مساء الخير' : 'مساء النور');
-    document.getElementById('hmRecent').innerHTML = DEMO_ORDERS.slice(0, 3).map(orderRow).join('');
-    document.getElementById('hmAll').innerHTML = DEMO_ORDERS.map(orderRow).join('');
+    const all = loadOrders(), active = all.filter(o => o.status === 'active'), today = all.filter(o => isToday(o.ts));
+    const done = today.filter(o => o.status === 'done' && o.endTs);
+
+    document.getElementById('hmActive').innerHTML = active.length ? activeCard(active[0])
+        : '<div class="hm-empty">لا توجد طلبات قيد التوصيل الآن</div>';
+    document.getElementById('hmActiveCount').textContent = active.length > 1 ? `+${active.length - 1} أخرى` : '';
+    document.getElementById('stToday').textContent = today.length;
+    document.getElementById('stDone').textContent = today.filter(o => o.status === 'done').length;
+    document.getElementById('stAvg').innerHTML = done.length
+        ? Math.round(done.reduce((t, o) => t + (o.endTs - o.ts), 0) / done.length / MIN) + '<em>د</em>' : '—';
+    document.getElementById('hmRecent').innerHTML = all.length ? all.slice(0, 3).map(o => orderRow(o, false)).join('')
+        : '<div class="hm-empty">لم ترسل أي طلب بعد. ابدأ باستدعاء كابتن.</div>';
+    document.getElementById('hmAll').innerHTML = all.length ? all.map(o => orderRow(o, true)).join('')
+        : '<div class="hm-empty">لا توجد طلبات بعد</div>';
 }
 
 /* ---------- الحساب: الصورة، القائمة، صفحة الملف الشخصي ---------- */
@@ -634,6 +692,7 @@ function submitOrder() {
         refText = `${calcState.dist} كم • ${calcState.total} JOD`;
     }
 
+    addOrder(refText || 'استدعاء كابتن مباشر', val === 'غير محدد' ? '' : val, notes === 'لا يوجد' ? '' : notes);
     const finalMsg = `${baseMsg}\n- قيمة الطلب: ${val}\n- ملاحظات: ${notes}`;
     const url = `https://wa.me/?text=${encodeURIComponent(finalMsg)}`;
     window.open(url, '_blank');
@@ -661,7 +720,6 @@ function closeConstruction() {
 /* ---------- تشغيل ---------- */
 document.addEventListener('DOMContentLoaded', () => {
     buildSplashIcons();
-    renderHome();
     let skipSplash = false;
     try { skipSplash = sessionStorage.getItem('hw-skip-splash') === '1'; sessionStorage.removeItem('hw-skip-splash'); } catch (e) {}
 
@@ -691,4 +749,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     document.addEventListener('click', (e) => { if (!e.target.closest('#userWrap')) closeUserMenu(); });
+    setInterval(() => { if (!document.hidden) renderHome(); }, 30000);
 });

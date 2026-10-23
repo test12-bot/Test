@@ -744,7 +744,7 @@ button.brand-mini:active{transform:scale(.95);}
 .hm-quick span{width:54px; height:54px; border-radius:20px; display:flex; align-items:center; justify-content:center; color:var(--teal-800); background:var(--glass-bg-strong); border:1px solid var(--glass-border); box-shadow:var(--shadow-neu);}
 .hm-quick svg{width:24px; height:24px;}
 .hm-list{display:flex; flex-direction:column; gap:10px;}
-.hm-order{display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:var(--r-md); background:var(--glass-bg-strong); border:1px solid var(--glass-border); box-shadow:var(--shadow-neu);}
+.hm-order{display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:13px 14px; border-radius:var(--r-md); background:var(--glass-bg-strong); border:1px solid var(--glass-border); box-shadow:var(--shadow-neu);}
 .hm-order .ic{width:40px; height:40px; flex:0 0 auto; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(37,206,209,.16); color:var(--teal-600);}
 .hm-order .ic svg{width:20px; height:20px;}
 .hm-order .tx{flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.4;}
@@ -770,3 +770,12 @@ body.authed .tabbar{display:flex;}
 .tabbar button.on::after{content:""; width:18px; height:3px; border-radius:3px; background:var(--yellow-700); margin-top:1px;}
 @media (min-width:1024px){ .tabbar{left:50%; right:auto; width:460px; transform:translateX(-50%); bottom:16px; border-radius:999px; border:1px solid var(--glass-border);} }
 @media print{ .tabbar{display:none !important;} }
+
+.hm-count{font-size:12px; font-weight:700; color:var(--teal-600);}
+.hm-empty{padding:22px 16px; border-radius:var(--r-lg); text-align:center; font-size:13px; font-weight:600; color:var(--ink-soft); background:rgba(255,255,255,.55); border:1.5px dashed rgba(14,58,59,.18);}
+.acts{display:flex; gap:8px; width:100%; margin-top:12px;}
+.hm-order .acts{margin-top:2px;}
+.acts button{flex:1; padding:10px 8px; border-radius:999px; font-size:12.5px; font-weight:700; transition:transform .15s var(--ease-out);}
+.acts button:active{transform:scale(.96);}
+.b-ok{color:var(--teal-900); background:var(--yellow);}
+.b-no{color:var(--danger); background:rgba(229,72,77,.1);}

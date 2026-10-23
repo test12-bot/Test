@@ -140,23 +140,13 @@
           <span class="hm-hero-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></span>
         </button>
 
-        <div class="hm-sec"><h2>طلب قيد التوصيل</h2><span class="hm-demo">بيانات تجريبية</span></div>
-        <article class="hm-track">
-          <div class="hm-track-top">
-            <div><b>طلب #ORD-1042</b><small>الكابتن محمد · 0791234567</small></div>
-            <span class="hm-eta"><i></i>12 د</span>
-          </div>
-          <ol class="hm-steps">
-            <li class="done"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>تم الاستلام</li>
-            <li class="now"><span></span>في الطريق</li>
-            <li><span></span>تم التسليم</li>
-          </ol>
-        </article>
+        <div class="hm-sec"><h2>طلب قيد التوصيل</h2><span class="hm-count" id="hmActiveCount"></span></div>
+        <div id="hmActive"></div>
 
         <div class="hm-stats">
-          <div><b>18</b><small>طلبات اليوم</small></div>
-          <div><b>24<em>د</em></b><small>متوسط التوصيل</small></div>
-          <div><b>16</b><small>تم تسليمها</small></div>
+          <div><b id="stToday">0</b><small>طلبات اليوم</small></div>
+          <div><b id="stAvg">—</b><small>متوسط التسليم</small></div>
+          <div><b id="stDone">0</b><small>تم تسليمها</small></div>
         </div>
 
         <div class="hm-sec"><h2>وصول سريع</h2></div>
@@ -174,7 +164,7 @@
 
     <section class="screen" id="screen-orders">
       <div class="container">
-        <div class="page-heading"><h1>الطلبات</h1><p>سجل طلبات اليوم <span class="hm-demo">بيانات تجريبية</span></p></div>
+        <div class="page-heading"><h1>الطلبات</h1><p>سجل الطلبات التي أرسلتها من هذا الجهاز</p></div>
         <div class="hm-list" id="hmAll"></div>
       </div>
     </section>
